@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>Oasis4</groupId>
+    <artifactId>oasis</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+
+        <surefire.fork.count>3</surefire.fork.count>
+        <mbie.version>1.6.2</mbie.version>
+        <config.dir>src/main/config</config.dir>
+
+        <!-- junit.version>4.11</junit.version -->
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>mbie.automation</groupId>
+            <artifactId>mbie-automation-framework</artifactId>
+            <version>${mbie.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.5.1</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>EAT</id>
+
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <delete file="${config.dir}/config.properties" />
+                                <copy file="${config.dir}/config.eat.properties" tofile="${config.dir}/config.properties" />
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>PreProd</id>
+
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <delete file="${config.dir}/config.properties" />
+                                <copy file="${config.dir}/config.preprod.properties" tofile="${config.dir}/config.properties" />
+                            </tasks>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--to run integration test mvn test -Pacceptance-test -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.19.1</version>
+                <executions>
+                    <execution>
+                        <id>acceptance-test</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <forkCount>${surefire.fork.count}</forkCount>
+                            <reuseForks>false</reuseForks>
+                            <argLine>-Duser.language=en</argLine>
+                            <argLine>-Xmx1024m</argLine>
+                            <argLine>-XX:MaxPermSize=256m</argLine>
+                            <argLine>-Dfile.encoding=UTF-8</argLine>
+                            <useFile>false</useFile>
+                            <includes>
+                                <include>**/*AT.class</include>
+                            </includes>
+                            <testFailureIgnore>true</testFailureIgnore>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <id>first-execution</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>mbie.automation.ReportMerger</mainClass>
+                            <arguments>
+                                <argument>target/cucumber-report/</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>second-execution</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>mbie.automation.cucumberReport</mainClass>
+                            <arguments>
+                                <argument>target/cucumber-report-bootstrap/</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>mbie.automation.ReportMerger</mainClass>
+                    <arguments>
+                        <argument>target/cucumber-report/</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+
+</project>
